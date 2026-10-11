@@ -1,0 +1,29 @@
+# ===== Visual Studio 用户级缓存 =====
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# ===== 构建输出（不上传，别人 clone 后自行编译） =====
+bin/
+obj/
+x64/
+Debug/
+Release/
+*.lib
+*.obj
+*.pdb
+*.ilk
+*.exp
+*.idb
+*.lastbuildstate
+
+# ===== 本地打包产物（如需发布 exe，用 GitHub Releases，不放进仓库） =====
+*.zip
+三角洲行动玩法推荐器_多工程版.zip
+
+# ===== 其他 =====
+Thumbs.db
+Desktop.ini
+*.log
