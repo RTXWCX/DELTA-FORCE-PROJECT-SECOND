@@ -86,7 +86,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\Common;$(ProjectDir)..\DFA_Weapons;$(ProjectDir)..\DFA_Maps;$(ProjectDir)..\DFA_Economy;$(ProjectDir)..\DFA_Operators;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\Common;$(ProjectDir)..\DFA_Weapons;$(ProjectDir)..\DFA_CustomWeapons;$(ProjectDir)..\DFA_Maps;$(ProjectDir)..\DFA_Economy;$(ProjectDir)..\DFA_Operators;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
   </ItemDefinitionGroup>
@@ -100,7 +100,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\Common;$(ProjectDir)..\DFA_Weapons;$(ProjectDir)..\DFA_Maps;$(ProjectDir)..\DFA_Economy;$(ProjectDir)..\DFA_Operators;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\Common;$(ProjectDir)..\DFA_Weapons;$(ProjectDir)..\DFA_CustomWeapons;$(ProjectDir)..\DFA_Maps;$(ProjectDir)..\DFA_Economy;$(ProjectDir)..\DFA_Operators;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
     </ClCompile>
@@ -113,7 +113,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\Common;$(ProjectDir)..\DFA_Weapons;$(ProjectDir)..\DFA_Maps;$(ProjectDir)..\DFA_Economy;$(ProjectDir)..\DFA_Operators;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\Common;$(ProjectDir)..\DFA_Weapons;$(ProjectDir)..\DFA_CustomWeapons;$(ProjectDir)..\DFA_Maps;$(ProjectDir)..\DFA_Economy;$(ProjectDir)..\DFA_Operators;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
   </ItemDefinitionGroup>
@@ -127,7 +127,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\Common;$(ProjectDir)..\DFA_Weapons;$(ProjectDir)..\DFA_Maps;$(ProjectDir)..\DFA_Economy;$(ProjectDir)..\DFA_Operators;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\Common;$(ProjectDir)..\DFA_Weapons;$(ProjectDir)..\DFA_CustomWeapons;$(ProjectDir)..\DFA_Maps;$(ProjectDir)..\DFA_Economy;$(ProjectDir)..\DFA_Operators;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <Optimization>MaxSpeed</Optimization>
     </ClCompile>
@@ -139,6 +139,9 @@
   <ItemGroup>
     <ProjectReference Include="..\DFA_Weapons\DFA_Weapons.vcxproj">
       <Project>{1355CE30-663E-4C57-817E-EC65EFDC93CF}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\DFA_CustomWeapons\DFA_CustomWeapons.vcxproj">
+      <Project>{A3F1C7D2-5B84-4E19-9C2A-6D0F8E3B7A54}</Project>
     </ProjectReference>
     <ProjectReference Include="..\DFA_Maps\DFA_Maps.vcxproj">
       <Project>{9B5DB4B2-7457-4617-AC53-E5C165A5BBE5}</Project>

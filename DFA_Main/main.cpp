@@ -1,12 +1,14 @@
 // ============================================================================
 //  main.cpp —— 主程序（工程：DFA_Main，控制台应用）
 //  职责：用户交互（菜单输入）、调用推荐引擎、输出完整建议
-//  说明：本工程为「整合入口」，链接 5 个模块静态库：
-//        DFA_Weapons / DFA_Maps / DFA_Economy / DFA_Styles / DFA_Engine
+//  说明：本工程为「整合入口」，链接 7 个模块静态库：
+//        DFA_Weapons / DFA_CustomWeapons / DFA_Operators / DFA_Maps /
+//        DFA_Economy / DFA_Styles / DFA_Engine
 //  扩展：改数据去各模块 .cpp 的「配置区」；改输出文案直接改本文件。
 // ============================================================================
 #include "dfa_common.h"
 #include "dfa_weapons.h"
+#include "dfa_custom_weapons.h"
 #include "dfa_operators.h"
 #include "dfa_maps.h"
 #include "dfa_economy.h"
@@ -17,12 +19,76 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <cstdlib>
 
 // ============================ 工具函数 ============================
 
 static void InitConsole() {
     SetConsoleOutputCP(65001);   // 控制台 UTF-8 显示中文
     SetConsoleCP(65001);
+}
+
+// -------- 自定义枪械：统一菜单下标（内置在前，自定义在后） --------
+
+static int TotalWeaponCount() {
+    return DFA_W_GetWeaponCount() + DFA_CW_GetCount();
+}
+
+static const WeaponInfo* WeaponAt(int idx) {
+    const int builtin = DFA_W_GetWeaponCount();
+    if (idx < 0) return nullptr;
+    if (idx < builtin) return DFA_W_GetWeapon(idx);
+    return DFA_CW_GetWeapon(idx - builtin);
+}
+
+// 命令行/环境变量里的路径按本机 ANSI（中文系统即 GBK）解释，再转成 UTF-8 交给模块
+static std::string LocalToUtf8(const std::string& s) {
+    if (s.empty()) return s;
+    const int n = MultiByteToWideChar(CP_ACP, 0, s.c_str(), (int)s.size(), nullptr, 0);
+    if (n <= 0) return s;
+    std::wstring w((size_t)n, L'\0');
+    if (MultiByteToWideChar(CP_ACP, 0, s.c_str(), (int)s.size(), &w[0], n) != n) return s;
+    const int m = WideCharToMultiByte(CP_UTF8, 0, w.c_str(), (int)w.size(), nullptr, 0, nullptr, nullptr);
+    if (m <= 0) return s;
+    std::string u((size_t)m, '\0');
+    if (WideCharToMultiByte(CP_UTF8, 0, w.c_str(), (int)w.size(), &u[0], m, nullptr, nullptr) != m) return s;
+    return u;
+}
+
+// 数据目录优先级：--weapon-dir 参数 > 环境变量 DFA_WEAPON_DIR > exe 同级「自定义枪械」
+static std::string ResolveWeaponFolder(int argc, char** argv) {
+    for (int i = 1; i < argc; ++i) {
+        const std::string arg = argv[i];
+        if (arg == "--weapon-dir" && i + 1 < argc) return LocalToUtf8(argv[++i]);
+        const std::string key = "--weapon-dir=";
+        if (arg.compare(0, key.size(), key) == 0) return LocalToUtf8(arg.substr(key.size()));
+    }
+    const char* env = std::getenv("DFA_WEAPON_DIR");
+    if (env != nullptr && *env != '\0') return LocalToUtf8(env);
+    return DFA_CW_GetDefaultFolder();
+}
+
+static void PrintCustomStatus(const std::string& folder, int loaded) {
+    if (loaded < 0) {
+        std::cout << "  [自定义枪械] 未找到数据文件夹：" << folder << "\n";
+        std::cout << "    可新建该文件夹放入 .txt 数据，或用 --weapon-dir <目录> 指定。\n\n";
+        return;
+    }
+    if (loaded == 0) {
+        std::cout << "  [自定义枪械] 已扫描 " << DFA_CW_GetFileCount() << " 个文件，未解析到有效数据。\n";
+    } else {
+        std::cout << "  [自定义枪械] 已从 " << DFA_CW_GetFileCount() << " 个文件载入 "
+                  << loaded << " 把私人枪械（" << folder << "）。\n";
+    }
+    const int errCount = DFA_CW_GetErrorCount();
+    if (errCount > 0) {
+        const int show = errCount > 5 ? 5 : errCount;
+        std::cout << "    发现 " << errCount << " 条数据问题，前 " << show << " 条：\n";
+        for (int i = 0; i < show; ++i) {
+            std::cout << "      - " << DFA_CW_GetError(i) << "\n";
+        }
+    }
+    std::cout << "\n";
 }
 
 static int ReadInt(const char* prompt, int lo, int hi) {
@@ -70,13 +136,14 @@ static bool ReadYesNo(const char* prompt) {
 
 static void PrintBanner() {
     std::cout << "=============================================================\n";
-    std::cout << "      三角洲行动 · 烽火地带 玩法风格推荐器 v2.2（多模块）\n";
+    std::cout << "      三角洲行动 · 烽火地带 玩法风格推荐器 v2.3（多模块）\n";
     std::cout << "  基于游戏内设定与玩家社区共识（NGA / B站 / 抖音百科）整理\n";
+    std::cout << "  支持从「自定义枪械」文件夹自动载入私人枪械数据\n";
     std::cout << "=============================================================\n\n";
 }
 
 static void PrintProfile(const DfaProfile& p) {
-    const WeaponInfo* w = DFA_W_GetWeapon(p.weaponIdx);
+    const WeaponInfo* w = WeaponAt(p.weaponIdx);
     const OperatorInfo* op = DFA_O_GetOperator(p.opIdx);
     const MapInfo*    m = DFA_M_GetMap(p.mapIdx);
     const DiffInfo*   d = DFA_M_GetDiff(p.diffIdx);
@@ -112,7 +179,7 @@ static void PrintScores(const int scores[DFA_STYLE_COUNT]) {
 static void PrintConclusion(int best, bool forced) {
     std::cout << "=============================================================\n";
     if (forced) {
-        std::cout << "  ★ 强制建议（资金不足进入绝密风险极高）★\n";
+        std::cout << "  ★ 强制建议（资金不足进入绝密/超临界风险极高）★\n";
     }
     std::cout << "  推荐玩法：\n";
     std::cout << "  ┌─────────────────────────────────────────────────┐\n";
@@ -122,7 +189,7 @@ static void PrintConclusion(int best, bool forced) {
 }
 
 static void PrintJudgement(const DfaProfile& p) {
-    const WeaponInfo* w = DFA_W_GetWeapon(p.weaponIdx);
+    const WeaponInfo* w = WeaponAt(p.weaponIdx);
     const OperatorInfo* op = DFA_O_GetOperator(p.opIdx);
     const MapInfo*    m = DFA_M_GetMap(p.mapIdx);
     const DiffInfo*   d = DFA_M_GetDiff(p.diffIdx);
@@ -163,12 +230,23 @@ static void PrintJudgement(const DfaProfile& p) {
     std::cout << "---------------------------------------------------------\n\n";
 }
 
-static void PrintGuide(int best) {
+static void PrintGuide(const DfaProfile& p, int best) {
     const StyleGuide* g = DFA_S_GetGuide(best);
     if (!g) return;
     std::cout << "------------------------ 玩法档案 ------------------------\n";
     std::cout << "  【装备建议】\n    " << g->loadout << "\n\n";
     std::cout << "  【战术要点】\n    " << g->tactics << "\n\n";
+
+    // 核心物资区随用户选择的地图联动
+    const char* zones = DFA_M_GetLootZones(p.mapIdx);
+    if (zones && zones[0]) {
+        std::cout << "  【核心物资区】\n    " << zones << "\n\n";
+    }
+    const char* special = DFA_M_GetSpecialNote(p.mapIdx, p.diffIdx);
+    if (special && special[0]) {
+        std::cout << "  【超临界特别提示】\n    " << special << "\n\n";
+    }
+
     std::cout << "  【经济规划】\n    " << g->economy << "\n\n";
     std::cout << "  【风险提醒】\n    " << g->risk << "\n";
     std::cout << "---------------------------------------------------------\n\n";
@@ -179,8 +257,9 @@ static void PrintWarnings(const DfaProfile& p, int best) {
     int tier = DFA_E_WealthTier(p.wealthWan);
     bool any = false;
     std::cout << "------------------------ 风险与提示 ----------------------\n";
-    if (p.diffIdx == DFA_DIFF_TOP_SECRET && p.wealthWan < 500) {
-        std::cout << "  [高危] 资金不足 500 万打绝密风险极高，建议先在机密练手攒钱。\n";
+    if ((p.diffIdx == DFA_DIFF_TOP_SECRET || p.diffIdx == DFA_DIFF_SUPERCRITICAL)
+        && p.wealthWan < 500) {
+        std::cout << "  [高危] 资金不足 500 万打绝密/超临界风险极高，建议先降一档练手攒钱。\n";
         any = true;
     }
     if (best == DFA_STYLE_FULL_PUSH && p.wealthWan < 500) {
@@ -225,27 +304,31 @@ static void PrintFooter() {
     std::cout << "=============================================================\n";
     std::cout << "  说明：本程序依据游戏内设定与玩家社区共识编写，非官方数据。\n";
     std::cout << "  各模块数据均为独立工程中的「配置区」常量，修改后重新编译即可。\n";
-    std::cout << "  工程结构：DFA_Weapons / DFA_Operators / DFA_Maps / DFA_Economy /\n";
-    std::cout << "            DFA_Styles / DFA_Engine（引擎）/ DFA_Main（主程序整合入口）\n";
+    std::cout << "  工程结构：DFA_Weapons / DFA_CustomWeapons（私人枪械）/ DFA_Operators /\n";
+    std::cout << "            DFA_Maps / DFA_Economy / DFA_Styles / DFA_Engine / DFA_Main\n";
+    std::cout << "  私人枪械：把 .txt 放进 exe 同级「自定义枪械」文件夹，或 --weapon-dir <目录>。\n";
     std::cout << "=============================================================\n\n";
 }
 
 // ============================ 主流程 ============================
 
-int main() {
+int main(int argc, char** argv) {
     InitConsole();
     PrintBanner();
+
+    const std::string weaponFolder = ResolveWeaponFolder(argc, argv);
+    PrintCustomStatus(weaponFolder, DFA_CW_Load(weaponFolder.c_str()));
 
     bool again = true;
     while (again) {
         std::cout << "请依次输入以下 6 项信息（数字菜单或 y/n）：\n\n";
 
-        // 【1/6】枪械（按大类分组展示，编号连续）
-        int wCount = DFA_W_GetWeaponCount();
-        std::cout << "【1/5】最擅长 / 精通的枪械（输入序号）：\n";
+        // 【1/6】枪械（内置按大类分组，自定义枪械作为最后一组，编号连续）
+        int wCount = TotalWeaponCount();
+        std::cout << "【1/6】最擅长 / 精通的枪械（输入序号）：\n";
         {
             int lastCls = -1;
-            for (int i = 0; i < wCount; ++i) {
+            for (int i = 0; i < DFA_W_GetWeaponCount(); ++i) {
                 const WeaponInfo* w = DFA_W_GetWeapon(i);
                 if (w->cls != lastCls) {
                     lastCls = w->cls;
@@ -253,6 +336,14 @@ int main() {
                 }
                 std::cout << "    " << (i + 1) << ". " << w->name
                           << "（" << w->subType << "）\n";
+            }
+            if (DFA_CW_GetCount() > 0) {
+                std::cout << "  【自定义枪械（" << DFA_CW_GetFolder() << "）】\n";
+                for (int i = 0; i < DFA_CW_GetCount(); ++i) {
+                    const WeaponInfo* w = DFA_CW_GetWeapon(i);
+                    std::cout << "    " << (DFA_W_GetWeaponCount() + i + 1) << ". " << w->name
+                              << "（" << w->subType << " · " << DFA_W_GetClassName(w->cls) << "）\n";
+                }
             }
         }
         std::cout << "  请输入 1 ~ " << wCount << " 之间的序号：";
@@ -326,7 +417,7 @@ int main() {
         PrintScores(scores);
         PrintConclusion(best, forced);
         PrintJudgement(p);
-        PrintGuide(best);
+        PrintGuide(p, best);
         PrintWarnings(p, best);
         PrintFooter();
 

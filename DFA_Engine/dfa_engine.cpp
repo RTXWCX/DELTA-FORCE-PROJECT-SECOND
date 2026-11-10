@@ -1,11 +1,12 @@
 // ============================================================================
 //  dfa_engine.cpp —— 推荐引擎模块实现
 //  评分模型：总分 = 枪械类别分 + 干员兵种分 + 地图分 + 难度分 + 资金分档分 + 队友分
-//  强制规则：绝密 + 资金 < 100 万 → 强制跑刀（防破产兜底）
+//  强制规则：绝密 / 超临界 + 资金 < 100 万 → 强制跑刀（防破产兜底）
 //  扩展：新增规则 → 在本文件底部继续追加 ForceRule 条件即可。
 // ============================================================================
 #include "dfa_engine.h"
 #include "dfa_weapons.h"
+#include "dfa_custom_weapons.h"
 #include "dfa_maps.h"
 #include "dfa_economy.h"
 #include "dfa_operators.h"
@@ -13,11 +14,17 @@
 void DFA_E_ComputeScores(const DfaProfile* p, int out[DFA_STYLE_COUNT]) {
     if (!p || !out) return;
 
-    // 枪械类别（越界按通用处理）
-    WeaponClass cls = WC_GENERIC;
-    const WeaponInfo* w = DFA_W_GetWeapon(p->weaponIdx);
-    if (w) cls = w->cls;
-    const int* ws = DFA_W_GetStyleScores(cls);
+    // 枪械类别：weaponIdx 为「内置枪械 + 自定义枪械」的统一菜单下标。
+    // 内置在前（0 .. DFA_W_GetWeaponCount()-1），自定义从其后开始。
+    const int builtinCount = DFA_W_GetWeaponCount();
+    const int* ws = nullptr;
+    if (p->weaponIdx >= 0 && p->weaponIdx < builtinCount) {
+        const WeaponInfo* w = DFA_W_GetWeapon(p->weaponIdx);
+        ws = DFA_W_GetStyleScores(w ? w->cls : WC_GENERIC);
+    } else {
+        ws = DFA_CW_GetStyleScores(p->weaponIdx - builtinCount);
+        if (!ws) ws = DFA_W_GetStyleScores(WC_GENERIC);   // 越界按通用处理
+    }
 
     // 干员兵种（越界按 0 号处理）
     const OperatorInfo* op = DFA_O_GetOperator(p->opIdx < 0 || p->opIdx >= DFA_O_GetOperatorCount() ? 0 : p->opIdx);
@@ -48,7 +55,11 @@ int DFA_E_PickBest(const int scores[DFA_STYLE_COUNT]) {
 
 bool DFA_E_ForceRule(const DfaProfile* p, int& best) {
     if (!p) return false;
-    if (p->diffIdx == DFA_DIFF_TOP_SECRET && p->wealthWan < 100) {
+
+    // 绝密 / 超临界 + 资金不足 100 万 → 强制跑刀（防破产兜底）
+    const bool highRisk = (p->diffIdx == DFA_DIFF_TOP_SECRET ||
+        p->diffIdx == DFA_DIFF_SUPERCRITICAL);
+    if (highRisk && p->wealthWan < 100) {
         best = DFA_STYLE_KNIFE_RUN;   // 强制跑刀
         return true;
     }

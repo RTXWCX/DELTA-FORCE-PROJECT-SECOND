@@ -27,6 +27,7 @@ enum DfaDifficulty {
     DFA_DIFF_SECRET,        // 机密
     DFA_DIFF_TOP_SECRET,    // 绝密
     DFA_DIFF_NIGHT,         // 永夜（黑夜玩法）
+    DFA_DIFF_SUPERCRITICAL, // 超临界（比绝密更难，目前仅 AZ3）
     DFA_DIFF_COUNT
 };
 
@@ -49,6 +50,12 @@ extern "C" {
 int      DFA_M_GetMapCount();
 const MapInfo* DFA_M_GetMap(int idx);           // 越界返回 nullptr
 const int*     DFA_M_GetMapStyleScores(int idx);
+
+// 该图的核心物资区（用于战术要点，随用户选择的地图联动；越界返回 nullptr）
+const char*    DFA_M_GetLootZones(int mapIdx);
+
+// 地图 + 难度的特别提示（如 AZ3 超临界的辐射泄漏点；无则返回 nullptr）
+const char*    DFA_M_GetSpecialNote(int mapIdx, int diffIdx);
 
 // 难度
 int      DFA_M_GetDiffCount();

@@ -104,10 +104,10 @@ git status
 ### 2.5 提交（打上第一个版本记录）
 
 ```bash
-git commit -m "feat: 三角洲行动玩法风格推荐器 v2.2（多工程模块化）"
+git commit -m "feat: 三角洲行动玩法风格推荐器 v2.3（多工程模块化）"
 
 # 说明：7 个 VS 工程（枪械/干员/地图/经济/玩法/引擎/主程序）
-# 69 把枪械、17 名干员、6 图 4 难度、五档玩法推荐
+# 69 把枪械、18 名干员、6 图 4 难度、五档玩法推荐（支持 txt 自定义枪械）
 ```
 
 ---
@@ -307,7 +307,7 @@ git config --global user.email "你的邮箱"
 cd C:\Users\123\Desktop\DFA_ModularProjects
 git init
 git add .
-git commit -m "feat: 三角洲行动玩法风格推荐器 v2.2"
+git commit -m "feat: 三角洲行动玩法风格推荐器 v2.3"
 git branch -M main
 git remote add origin https://github.com/你的用户名/仓库名.git
 git push -u origin main

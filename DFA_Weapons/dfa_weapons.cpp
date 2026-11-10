@@ -128,3 +128,66 @@ const int* DFA_W_GetStyleScores(WeaponClass c) {
     if (c < 0 || c >= WC_CLASS_COUNT) return kZero;
     return kWeaponScore[c];
 }
+
+// ---------- 大类名称反查（自定义枪械文本解析用） ----------
+// 中文名之外再收一批口语/英文别名；匹配时忽略大小写与首尾空白。
+static const struct { const char* text; WeaponClass cls; } kClassAliases[] = {
+    { "突击步枪", WC_ASSAULT }, { "突击", WC_ASSAULT }, { "步枪", WC_ASSAULT },
+    { "ar", WC_ASSAULT }, { "assault", WC_ASSAULT }, { "assaultrifle", WC_ASSAULT },
+    { "gunrifle", WC_ASSAULT },
+
+    { "冲锋枪", WC_SMG }, { "冲锋", WC_SMG }, { "smg", WC_SMG }, { "gunSMG", WC_SMG },
+
+    { "狙击步枪", WC_SNIPER }, { "狙击", WC_SNIPER }, { "狙", WC_SNIPER },
+    { "sniper", WC_SNIPER }, { "gunsniper", WC_SNIPER },
+
+    { "射手步枪", WC_DMR }, { "射手", WC_DMR }, { "精确射手", WC_DMR },
+    { "dmr", WC_DMR }, { "marksman", WC_DMR }, { "gunmp", WC_DMR },
+
+    { "霰弹枪", WC_SHOTGUN }, { "霰弹", WC_SHOTGUN }, { "喷子", WC_SHOTGUN },
+    { "shotgun", WC_SHOTGUN }, { "gunshotgun", WC_SHOTGUN },
+
+    { "轻机枪", WC_LMG }, { "机枪", WC_LMG }, { "lmg", WC_LMG },
+    { "machinegun", WC_LMG }, { "gunlmg", WC_LMG },
+
+    { "手枪", WC_PISTOL }, { "pistol", WC_PISTOL }, { "handgun", WC_PISTOL },
+    { "gunpistol", WC_PISTOL },
+
+    { "特殊武器", WC_SPECIAL }, { "特殊", WC_SPECIAL }, { "弓", WC_SPECIAL },
+    { "special", WC_SPECIAL }, { "bow", WC_SPECIAL },
+
+    { "通用", WC_GENERIC }, { "其他", WC_GENERIC }, { "其它", WC_GENERIC },
+    { "generic", WC_GENERIC }, { "other", WC_GENERIC },
+};
+
+static bool AliasEquals(const char* a, const char* b) {
+    while (*a != '\0' && *b != '\0') {
+        const char ca = (*a >= 'A' && *a <= 'Z') ? (char)(*a - 'A' + 'a') : *a;
+        const char cb = (*b >= 'A' && *b <= 'Z') ? (char)(*b - 'A' + 'a') : *b;
+        if (ca != cb) return false;
+        ++a;
+        ++b;
+    }
+    return *a == '\0' && *b == '\0';
+}
+
+int DFA_W_FindClass(const char* name) {
+    if (name == nullptr) return -1;
+
+    while (*name == ' ' || *name == '\t') ++name;
+    const char* end = name;
+    while (*end != '\0') ++end;
+    while (end > name && (end[-1] == ' ' || end[-1] == '\t')) --end;
+
+    const int len = (int)(end - name);
+    char buf[64];
+    if (len <= 0 || len >= (int)sizeof(buf)) return -1;
+    for (int i = 0; i < len; ++i) buf[i] = name[i];
+    buf[len] = '\0';
+
+    const int aliasCount = (int)(sizeof(kClassAliases) / sizeof(kClassAliases[0]));
+    for (int i = 0; i < aliasCount; ++i) {
+        if (AliasEquals(buf, kClassAliases[i].text)) return (int)kClassAliases[i].cls;
+    }
+    return -1;
+}

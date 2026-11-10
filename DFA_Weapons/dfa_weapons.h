@@ -43,6 +43,11 @@ const char*       DFA_W_GetClassName(WeaponClass c);
 // 某大类枪械对五种玩法的评分（返回 5 元素数组，顺序见 dfa_common.h）
 const int*        DFA_W_GetStyleScores(WeaponClass c);
 
+// 按名称反查大类（自定义枪械文本解析用）：支持中文名与常见别名，
+// 例如 "突击步枪"/"突击"/"步枪"/"AR"/"gunRifle" 均返回 WC_ASSAULT。
+// 无法识别返回 -1。
+int               DFA_W_FindClass(const char* name);
+
 #ifdef __cplusplus
 }
 #endif

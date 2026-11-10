@@ -10,7 +10,8 @@
 
 // 用户输入档案（字段含义见各模块头文件）
 struct DfaProfile {
-    int        weaponIdx;   // 枪械菜单编号（0 起）
+    int        weaponIdx;   // 枪械菜单编号（0 起）：内置枪械在前，自定义枪械紧随其后
+                            // （自定义下标 = 内置数量 + DFA_CW 序号；见 dfa_custom_weapons.h）
     int        opIdx;       // 干员菜单编号（0 起，见 DFA_Operators 模块）
     int        mapIdx;      // 地图编号（DfaMapId）
     int        diffIdx;     // 难度编号（DfaDifficulty）
@@ -28,7 +29,7 @@ void DFA_E_ComputeScores(const DfaProfile* p, int out[DFA_STYLE_COUNT]);
 // 选出得分最高的风格；同分取编号小（风险更低）的
 int  DFA_E_PickBest(const int scores[DFA_STYLE_COUNT]);
 
-// 强制兜底规则：绝密 + 资金不足 100 万 → 强制推荐跑刀（返回 true 表示触发）
+// 强制兜底规则：绝密 / 超临界 + 资金不足 100 万 → 强制推荐跑刀（返回 true 表示触发）
 // 触发时 best 被改写为跑刀编号
 bool DFA_E_ForceRule(const DfaProfile* p, int& best);
 
